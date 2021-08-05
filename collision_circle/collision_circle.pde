@@ -1,75 +1,54 @@
-int a=100, b=100, c=0;
-float f=random(1, 4), g=random(-4, -1);
-
-Ball[] ball = new Ball[3];
-
+ArrayList<Ball> balls;
+int n;
 
 void setup() {
   size(600, 600);
   colorMode(HSB, 360, 100, 100);
-  ball[0] = new Ball(200, 100, 50);
-  ball[1] = new Ball(500, 500, 75);
-  //ball[2] = new Ball(100, 100, c+1);
-  //for (int i = 2; i <ball.length ;i++) {
-  //  ball[i] = new Ball(100*(i-1), 100, 50);
-  //}
+  balls = new ArrayList<Ball>();
+  balls.add(new Ball(150, 150, 35, random(-1, 1) * 2.5, random(-1, 1) * 3));
+  balls.add(new Ball(450, 450, 35, random(-1, 1) * 2.5, random(-1, 1) * 3));
 }
 
 void draw() {
   background(360);
 
-  ball[2] = new Ball(a, b, c);
-  if (c >= 50) {
-    a += f;
-    b += g;
-    if (a >= (600-c)) {
-      f = -f;
-      a = 600-c;
-    } else if (a<=c) {
-      f = -f;
-      a = c;
-    } else if (b >=(600-c)) {
-      g = -g;
-      b = 600-c;
-    } else if (b<=c) {
-      g = -g;
-      b = c;
-    }
-  }
-
-  for (Ball ball : ball) {
-    ball.move();
+  for (int i = balls.size() - 1; i>=0; i--) {
+    Ball ball = balls.get(i);
+    ball.update();
     ball.display();
     ball.checkBoundaryCollision();
-  }
-
-  for (int i=0; i<ball.length; i++) {
-    for (int j=i+1; j<ball.length; j++) {
-      ball[i].checkCollision(ball[j]);
+    if (balls.size() > 15) {
+      if (ball.finish()) {
+        balls.remove(i);
+      }
     }
   }
-  //if (ball[0].boom(ball[1])) {
-  //  e += 1;
-  //}
-  //println(e);
-}
 
+  n = balls.size();
+  for (int i = 0; i < n-1; i++) {
+    for (int j = i + 1; j < n; j++) {
+      balls.get(i).checkCollision(balls.get(j));
+    }
+  }
+}
 
 class Ball {
   PVector position;
   PVector velocity;
   float radius, m;
-  float colorr;
+  float colorr = random(360);
+  //ceil(random(13))-1)*30;
+  float xx, yy;
+  int life;
 
-  Ball(float x, float y, float r_) {
+  Ball(float x, float y, float rr, float vx, float vy) {
     position = new PVector(x, y);
-    velocity = PVector.random2D();
-    velocity.mult(4);
-    radius = r_;
+    velocity = new PVector(vx, vy);
+    radius = rr;
     m = radius*.1;
   }
 
-  void move() {
+  void update() {
     position.add(velocity);
   }
 
@@ -83,33 +62,38 @@ class Ball {
     if (position.x > width-radius) {
       position.x = width-radius;
       velocity.x *= -1;
-      colorr -= random(60, 90);
+      colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
     } else if (position.x < radius) {
       position.x = radius;
       velocity.x *= -1;
-      colorr -= random(60, 90);
+      colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
     } else if (position.y > height-radius) {
       position.y = height-radius;
       velocity.y *= -1;
-      colorr -= random(40, 70);
+      colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
     } else if (position.y < radius) {
       position.y = radius;
       velocity.y *= -1;
-      colorr -= random(40, 70);
+      colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
     }
   }
 
   void checkCollision(Ball other) {
 
-    PVector distanceVect = PVector.sub(other.position, position);// Get distances between the balls components
-    float distanceVectMag = distanceVect.mag(); // Calculate magnitude of the vector separating the balls
-    float minDistance = radius + other.radius; // Minimum distance before they are touching
+    PVector distanceVect = PVector.sub(other.position, position);
+    // Get distances between the balls components
 
-    if (distanceVectMag < minDistance) {
+    float distanceVectMag = distanceVect.mag();
+    // Calculate magnitude of the vector separating the balls
+
+    float minDistance = radius + other.radius;
+    // Minimum distance before they are touching
+
+    if (distanceVectMag < minDistance ) {
       float distanceCorrection = (minDistance-distanceVectMag)/2.0;
       PVector d = distanceVect.copy();
       PVector correctionVector = d.normalize().mult(distanceCorrection);
@@ -191,27 +175,42 @@ class Ball {
       other.velocity.x = cosine * vFinal[1].x - sine * vFinal[1].y;
       other.velocity.y = cosine * vFinal[1].y + sine * vFinal[1].x;
 
-      c = 50;
-    }
-    //if (distanceVectMag <= minDistance) {
-    //  e += 2;
-    //  for (int i=2; i<ball.length; i++) {
+      life += 1;
 
-    //  }
-    //} else  {
-    //  e =0;
-    //}
+      xx = (position.x + other.position.x)/2;
+      yy = (position.y + other.position.y)/2;
+
+      PVector ao, vv, aoo;
+      float dd, ee = 0;
+
+      ao = new PVector(position.y - other.position.y, other.position.x - position.x );
+      aoo = ao.setMag(72);
+      
+      vv = new PVector(velocity.y, - velocity.x);
+
+      for (int i = 0; i < n-1; i++) {
+        dd = dist(xx + aoo.x, yy + aoo.y, balls.get(i).position.x, balls.get(i).position.y);
+        if (dd > 75) {
+          ee += 1;
+        }
+      }
+
+      if (xx + aoo.x >72 && xx + aoo.x < 528) {
+        if (yy + aoo.y > 72 && yy + aoo.y < 528) {
+          if (ee == n-1) {
+            balls.add(new Ball(xx + aoo.x, yy + aoo.y, 35, vv.x, vv.y));
+          }
+        }
+      }
+      
+    }
   }
 
-  //boolean boom(Ball other) {
-  //  PVector distanceVect = PVector.sub(other.position, position);// Get distances between the balls components
-  //  float distanceVectMag = distanceVect.mag(); // Calculate magnitude of the vector separating the balls
-  //  float minDistance = radius + other.radius; // Minimum distance before they are touching
-
-  //  if (distanceVectMag < minDistance+1) {
-  //    return true;
-  //  } else {
-  //    return false;
-  //  }
-  //}
+  boolean finish() {
+    if (life >= 1 ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
