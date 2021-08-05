@@ -1,12 +1,14 @@
 ArrayList<Ball> balls;
 int n;
+int a=1;
 
 void setup() {
   size(600, 600);
   colorMode(HSB, 360, 100, 100);
+  frameRate(60);
   balls = new ArrayList<Ball>();
-  balls.add(new Ball(150, 150, 35, random(-1, 1) * 2.5, random(-1, 1) * 3));
-  balls.add(new Ball(450, 450, 35, random(-1, 1) * 2.5, random(-1, 1) * 3));
+  balls.add(new Ball(150, 150, 35, 35, random(-1, 1) * 2.5, random(-1, 1) * 2.5));
+  balls.add(new Ball(450, 450, 35, 35, random(-1, 1) * 2.5, random(-1, 1) * 2.5));
 }
 
 void draw() {
@@ -17,7 +19,7 @@ void draw() {
     ball.update();
     ball.display();
     ball.checkBoundaryCollision();
-    if (balls.size() > 15) {
+    if (balls.size() > 10) {
       if (ball.finish()) {
         balls.remove(i);
       }
@@ -25,26 +27,27 @@ void draw() {
   }
 
   n = balls.size();
-  for (int i = 0; i < n-1; i++) {
-    for (int j = i + 1; j < n; j++) {
+  for (int i = 0; i<n-1; i++) {
+    for (int j = i+1; j<n; j++) {
       balls.get(i).checkCollision(balls.get(j));
     }
   }
 }
 
+
 class Ball {
   PVector position;
   PVector velocity;
-  float radius, m;
+  float radius, radiuss, m;
   float colorr = random(360);
-  //ceil(random(13))-1)*30;
   float xx, yy;
   int life;
 
-  Ball(float x, float y, float rr, float vx, float vy) {
+  Ball(float x, float y, float rr, float rrr, float vx, float vy) {
     position = new PVector(x, y);
     velocity = new PVector(vx, vy);
     radius = rr;
+    radiuss = rrr;
     m = radius*.1;
   }
 
@@ -55,7 +58,7 @@ class Ball {
   void display() {
     noStroke();
     fill(colorr, 100, 100);
-    ellipse(position.x, position.y, radius*2, radius*2);
+    ellipse(position.x, position.y, radius*2, radiuss*2);
   }
 
   void checkBoundaryCollision() {
@@ -64,21 +67,25 @@ class Ball {
       velocity.x *= -1;
       colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
+      radiuss += 10;
     } else if (position.x < radius) {
       position.x = radius;
       velocity.x *= -1;
       colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
-    } else if (position.y > height-radius) {
-      position.y = height-radius;
+      radiuss += 10;
+    } else if (position.y > height-radiuss) {
+      position.y = height-radiuss;
       velocity.y *= -1;
       colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
-    } else if (position.y < radius) {
-      position.y = radius;
+      radius += 10;
+    } else if (position.y < radiuss) {
+      position.y = radiuss;
       velocity.y *= -1;
       colorr -= random(30, 60);
       if (colorr<0) colorr += 360;
+      radius += 10;
     }
   }
 
@@ -175,7 +182,9 @@ class Ball {
       other.velocity.x = cosine * vFinal[1].x - sine * vFinal[1].y;
       other.velocity.y = cosine * vFinal[1].y + sine * vFinal[1].x;
 
-      life += 1;
+
+
+       life += 1;
 
       xx = (position.x + other.position.x)/2;
       yy = (position.y + other.position.y)/2;
@@ -198,7 +207,7 @@ class Ball {
       if (xx + aoo.x >72 && xx + aoo.x < 528) {
         if (yy + aoo.y > 72 && yy + aoo.y < 528) {
           if (ee == n-1) {
-            balls.add(new Ball(xx + aoo.x, yy + aoo.y, 35, vv.x, vv.y));
+            balls.add(new Ball(xx + aoo.x, yy + aoo.y, 35, 35, vv.x, vv.y));
           }
         }
       }
