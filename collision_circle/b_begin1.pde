@@ -10,8 +10,6 @@ PVector aa1 = new PVector(-150, 0);
 void begin1() {
   s1 = PVector.random2D();
   s1.mult(1.5);
-  
-  balls.add(new Ball(aa1.x, aa1.y, s1.x, s1.y));
 
   for (int angle = 0; angle < 360; angle += 9) {
     PVector c = PVector.fromAngle(radians(angle-135));
