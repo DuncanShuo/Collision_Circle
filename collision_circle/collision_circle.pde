@@ -1,9 +1,10 @@
 import java.util.concurrent.*;
 import java.util.LinkedList;
 
-HashMap<String, LinkedList<Ball>> grid;
+ConcurrentHashMap<String, LinkedList<Ball>> grid;
 LinkedList<Ball> balls;
 LinkedList<Ball> newBalls;
+ExecutorService executor;
 float radius=30;
 float gridSize=2*radius;
 int MAX_BALLS=20;
@@ -11,11 +12,12 @@ int MAX_BALLS=20;
 void setup() {
   size(600, 600);
   colorMode(HSB, 360, 100, 100);
-  grid=new HashMap<String, LinkedList<Ball>>();
+  grid=new ConcurrentHashMap<String, LinkedList<Ball>>();
   balls = new LinkedList<Ball>();
   newBalls = new LinkedList<Ball>();
   balls.add(new Ball(150, 150, random(-1, 1)*5, random(-1, 1)*5));
   balls.add(new Ball(450, 450, random(-1, 1)*5, random(-1, 1)*5));
+  executor = Executors.newFixedThreadPool(4);
 }
 
 void draw() {
@@ -31,18 +33,41 @@ void draw() {
     grid.get(key).add(ball);
   }
 
-  for (Ball ball : balls) {
-    ball.update();
-    ball.display();
-    ball.checkBoundaryCollision();
-    checkCollisions(ball);
+  ArrayList<Thread> threads = new ArrayList<Thread>();
+
+  for (final Ball ball : balls) {
+    Thread t = new Thread(new Runnable() {
+      public void run() {
+        ball.update();
+        checkCollisions(ball);
+      }
+    }
+    );
+    threads.add(t);
+    t.start();
   }
+
+  for (Thread t : threads) {
+    try {
+      t.join();
+    } 
+    catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+  
+  for(Ball ball:balls){
+    ball.checkBoundaryCollision();
+    ball.display();
+  }
+  
   balls.addAll(newBalls);
   newBalls.clear();
   
-  //if (balls.size() >= MAX_BALLS) balls.removeFirst();
-  while (balls.size()>MAX_BALLS) {
-    balls.removeFirst();
+  if (balls.size()>MAX_BALLS) {
+    for(int i=0;i<balls.size();i++){
+      balls.remove(i);
+    }
   }
 }
 
