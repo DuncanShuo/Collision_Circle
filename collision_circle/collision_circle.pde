@@ -1,20 +1,19 @@
 import java.util.concurrent.*;
-import java.util.LinkedList;
 
-ConcurrentHashMap<String, LinkedList<Ball>> grid;
-LinkedList<Ball> balls;
-LinkedList<Ball> newBalls;
+ConcurrentHashMap<String, ConcurrentLinkedQueue<Ball>> grid;
+ConcurrentLinkedQueue<Ball> balls;
+ConcurrentLinkedQueue<Ball> newBalls;
 ExecutorService executor;
 float radius=30;
 float gridSize=2*radius;
-int MAX_BALLS=20;
+int MAX_BALLS=30;
 
 void setup() {
   size(600, 600);
   colorMode(HSB, 360, 100, 100);
-  grid=new ConcurrentHashMap<String, LinkedList<Ball>>();
-  balls = new LinkedList<Ball>();
-  newBalls = new LinkedList<Ball>();
+  grid=new ConcurrentHashMap<String, ConcurrentLinkedQueue<Ball>>();
+  balls = new ConcurrentLinkedQueue<Ball>();
+  newBalls = new ConcurrentLinkedQueue<Ball>();
   balls.add(new Ball(150, 150, random(-1, 1)*5, random(-1, 1)*5));
   balls.add(new Ball(450, 450, random(-1, 1)*5, random(-1, 1)*5));
   executor = Executors.newFixedThreadPool(4);
@@ -28,7 +27,7 @@ void draw() {
   for (Ball ball : balls) {
     String key=getGridkey(ball.position);
     if (!grid.containsKey(key)) {
-      grid.put(key, new LinkedList<Ball>());
+      grid.put(key, new ConcurrentLinkedQueue<Ball>());
     }
     grid.get(key).add(ball);
   }
@@ -60,13 +59,13 @@ void draw() {
     ball.checkBoundaryCollision();
     ball.display();
   }
-  
+
   balls.addAll(newBalls);
   newBalls.clear();
-  
+
   if (balls.size()>MAX_BALLS) {
-    for(int i=0;i<balls.size();i++){
-      balls.remove(i);
+    while(balls.size()>5){
+      balls.poll();
     }
   }
 }
@@ -163,11 +162,11 @@ void checkCollision(Ball b, Ball other) {
 
     PVector cVel=new PVector(b.position.y-other.position.y, -b.position.x+other.position.x);
     PVector cPos=cVel.copy();
-    cVel.setMag(5);
+    cVel.setMag(3);
     cPos.setMag(radius*2);
 
     PVector newBallPos = new PVector(cposX + cPos.x, cposY + cPos.y);
-    
+
     if (isGridOccupied(newBallPos)) {
       newBalls.add(new Ball(newBallPos.x, newBallPos.y, cVel.x, cVel.y));
     }
@@ -178,7 +177,7 @@ boolean isGridOccupied(PVector newBall) {
   int gx=floor(newBall.x/gridSize);
   int gy=floor(newBall.y/gridSize);
 
-  if(newBall.x<radius||newBall.x>width-radius||newBall.y<radius||newBall.y>height-radius){
+  if (newBall.x<radius||newBall.x>width-radius||newBall.y<radius||newBall.y>height-radius) {
     return false;
   }
 
